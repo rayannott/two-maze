@@ -17,8 +17,12 @@ class MazeApp:
 
         self._create_buttons()
         self._create_create_room_panel()
+        self._create_join_room_panel()
         
-        self.menu_text_entries: list[TextEntry] = [self.create_room_panel.gui_objects['text_entry']]
+        self.menu_text_entries: list[TextEntry] = [
+            self.create_room_panel.gui_objects['text_entry'],
+            self.join_room_panel.gui_objects['text_entry']
+        ]
 
     def _create_buttons(self):
         self.create_btn = Button((70, 40), (1000, 235), self.surface, 
@@ -48,7 +52,22 @@ class MazeApp:
         )
         self.create_room_panel.populate_one(
             'start_btn',
-            Button((30, 90), (300, 50), self.surface, 'START', 'start the game with', parent=self.create_room_panel)
+            Button((30, 90), (300, 50), self.surface, 'START', 'enter the game with _ as the 1st player', parent=self.create_room_panel)
+        )
+
+    def _create_join_room_panel(self):
+        self.join_room_panel = Panel(
+            (1090, 40+(235+20)), (WINDOW_SIZE[0]-1090-70, 235),
+            self.surface, 'join room')
+        self.join_room_panel_flag = False
+        self.join_room_panel.set_active_visible(self.join_room_panel_flag)
+        self.join_room_panel.populate_one(
+            'text_entry',
+            TextEntry((30, 30), (500, 50), self.surface, 'enter the room code', parent=self.join_room_panel)
+        )
+        self.join_room_panel.populate_one(
+            'start_btn',
+            Button((30, 90), (300, 50), self.surface, 'START', 'enter the game with _ as the 2nd player', parent=self.join_room_panel)
         )
 
     def update_gui(self, pos):
@@ -60,7 +79,14 @@ class MazeApp:
 
         self.create_room_panel.update(pos)
         self.create_room_panel.gui_objects['start_btn'].hint_label.set_text(
-            f'start the game with {self.create_room_panel.gui_objects["text_entry"].get_text()}'
+            f'enter the game with {text_entry_text} as the 1st player'\
+            if (text_entry_text:=self.create_room_panel.gui_objects["text_entry"].get_text()) else 'empty field!'
+        )
+
+        self.join_room_panel.update(pos)
+        self.join_room_panel.gui_objects['start_btn'].hint_label.set_text(
+            f'enter the game with {text_entry_text} as the 2nd player'\
+            if (text_entry_text:=self.join_room_panel.gui_objects["text_entry"].get_text()) else 'empty field!'
         )
 
     def run_menu(self):
@@ -95,11 +121,12 @@ class MazeApp:
                         self.is_running = False
                     elif self.join_btn.clicked():
                         print('join_btn')
+                        self.join_room_panel_flag = not self.join_room_panel_flag
+                        self.join_room_panel.set_active_visible(self.join_room_panel_flag)
                     elif self.create_btn.clicked():
                         print('create_btn')
                         self.create_room_panel_flag = not self.create_room_panel_flag
-                        self.create_room_panel.set_visible(self.create_room_panel_flag)
-                        self.create_room_panel.set_active(self.create_room_panel_flag)
+                        self.create_room_panel.set_active_visible(self.create_room_panel_flag)
                     elif self.options_btn.clicked():
                         print('options_btn')
                     elif self.rules_btn.clicked():
@@ -119,7 +146,19 @@ class MazeApp:
                                 print('Error: empty room id entry')
                             else:
                                 print(f'game started with {room_id}')
-                                self.start_game_loop(room_id, False)
+                                self.start_game_loop(room_id, is_second_player=False)
+                    elif self.join_room_panel.clicked():
+                        obj_clicked = self.join_room_panel.object_clicked()
+                        if obj_clicked == 'text_entry':
+                            self.join_room_panel.gui_objects['text_entry'].toggle_focused()
+                        elif obj_clicked == 'start_btn':
+                            try:
+                                room_id = int(self.join_room_panel.gui_objects["text_entry"].get_text())
+                            except ValueError:
+                                print('Error: empty room id entry')
+                            else:
+                                print(f'game started with {room_id}')
+                                self.start_game_loop(room_id, is_second_player=True)
             pygame.display.update()
     
     def start_game_loop(self, room_id: int, is_second_player: bool):
