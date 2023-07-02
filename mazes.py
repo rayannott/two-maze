@@ -7,9 +7,7 @@ import matplotlib.pyplot as plt
 from mazelib import Maze
 from mazelib.generate.Prims import Prims
 
-NUM_OF_CHECKPOINTS = 4
-NUM_OF_MARKS = 30
-NUM_OF_MAZES = 3
+from utils.constants import *
 
 
 COLORS = [
