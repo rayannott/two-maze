@@ -7,9 +7,10 @@ def get_english_words() -> list[str]:
     return [w for w in words if len(w) > 6]
 
 def split_word_into(word: str, n_parts: int) -> list[str]:
+    part_len = len(word) // n_parts
     if n_parts == 2:
-        return [word[:4], word[4:]]
+        return [word[:part_len], word[part_len:]]
     if n_parts == 3:
-        return [word[:3], word[3:5], word[5:]]
+        return [word[:part_len], word[part_len:2*part_len], word[2*part_len:]]
     if n_parts == 4:
-        return [word[:2], word[2:4], word[4:6], word[6:]]
+        return [word[:part_len], word[part_len:2*part_len], word[2*part_len:3*part_len], word[4*part_len:]]
