@@ -177,6 +177,22 @@ class MyMaze:
             res += '\n'
         return res
 
+    def get_all_color_marks(self) -> list[tuple[tuple[int, int], TC]]:
+        to_ret = []
+        for i in range(self.grid_shape[0]):
+            for j in range(self.grid_shape[1]):
+                if self.maze[i][j].color != TC.BLANK:
+                    to_ret.append(((i, j), self.maze[i][j].color))
+        return to_ret
+
+    def get_all_things(self) -> list[tuple[tuple[int, int], TileItem]]:
+        to_ret = []
+        for i in range(self.grid_shape[0]):
+            for j in range(self.grid_shape[1]):
+                if self.maze[i][j].has is not None:
+                    to_ret.append(((i, j), self.maze[i][j].has))
+        return to_ret
+
     def plot_mpl(self, fog: bool = True):
         maze_img = np.zeros((*self.grid_shape, 3), dtype=float)
         for i in range(self.grid_shape[0]):
