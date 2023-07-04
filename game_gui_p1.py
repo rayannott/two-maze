@@ -4,7 +4,7 @@ import random
 
 from game import Game
 from mazes import TC, TT, TileItemType
-from gui.gui_rect import Button, Panel
+from gui.gui_rect import Button, Panel, TextEntry
 from gui.gui_utils import *
 from utils.constants import NUM_OF_MAZES, PER_MAP_COLOR_MARKS_SHOWN, SOMETHING_HINTS_SHOWN
 
@@ -33,48 +33,28 @@ class GameGUI1:
     def __init__(self, game: Game, surface: pygame.Surface) -> None:
         self.game = game
         self.chosen_maze_idx = 0
-        self.grid_shape = self.game.mazes[0].grid_shape
+        self.grid_shape = self.game.grid_shape
         pygame.init()
         self.surface = surface
         self.clock = pygame.time.Clock()
         self.is_running = True
-
-        # visible clues:
-        self._generate_color_marks_to_show()
-        self._generate_somethings_to_show()
 
         # visual notes/marks:
         self.mazes_color_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
         self.mazes_markers_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
         self.mazes_boolean_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
         self.revealed_checkpoints: dict[int, tuple[int, int, int]] = {}
+        print(self.game.checkpoint_codes)
 
+        # creating the panels:
         self._create_mazes_panel()
         self._create_maze_control_panel()
-    
-    def _generate_color_marks_to_show(self):
-        self.color_marks_to_show = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
-        random.seed(self.game.seed)
-        for maze_id, maze in enumerate(self.game.mazes):
-            marks = maze.get_all_color_marks()
-            random.shuffle(marks)
-            marks_to_show = marks[:PER_MAP_COLOR_MARKS_SHOWN]
-            deceptive_mark_id = random.randrange(PER_MAP_COLOR_MARKS_SHOWN)
-            for idx, ((i, j), tc) in enumerate(marks_to_show):
-                if idx != deceptive_mark_id:
-                    self.color_marks_to_show[maze_id, i, j] = tc.value
-                else:
-                    self.color_marks_to_show[maze_id, i, j] = tc.value+1 if tc.value != 3 else 1
+        self._create_command_line_panel()
 
-    def _generate_somethings_to_show(self):
-        self.somethings_to_show = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
-        random.seed(self.game.seed)
-        for maze_id, maze in enumerate(self.game.mazes):
-            hints = maze.get_all_things()
-            random.shuffle(hints)
-            hints_to_show = hints[:SOMETHING_HINTS_SHOWN]
-            for ((i, j), _) in hints_to_show:
-                self.somethings_to_show[maze_id, i, j] = 1
+        # text entries:
+        self.text_entries: list[TextEntry] = [
+            self.command_line_panel.gui_objects['text_entry']
+        ]
 
     def _create_mazes_panel(self):
         self.mazes_panel = Panel(
@@ -87,18 +67,42 @@ class GameGUI1:
     def _create_maze_control_panel(self):
         self.maze_control_panel = Panel(
             (self.mazes_panel.rect.topright[0] + 2 * SKIP_SIZE, 20),
-            (4*CHOOSE_MAZE_BTN_SIZE + 5 * BIG_SKIP_SIZE, 400),
-            self.surface,
+            (6*CHOOSE_MAZE_BTN_SIZE + 7 * BIG_SKIP_SIZE, 2*BIG_SKIP_SIZE+CHOOSE_MAZE_BTN_SIZE),
+            self.surface, 'choose the maze'
         )
         for i in range(len(self.game.mazes)):
             self.maze_control_panel.populate_one(
                 str(i),
                 Button(
                     (BIG_SKIP_SIZE + (CHOOSE_MAZE_BTN_SIZE + BIG_SKIP_SIZE) * i, BIG_SKIP_SIZE), 
-                    (CHOOSE_MAZE_BTN_SIZE, CHOOSE_MAZE_BTN_SIZE), self.surface, f'M{i}', f'choose maze {i}',
+                    (CHOOSE_MAZE_BTN_SIZE, CHOOSE_MAZE_BTN_SIZE), self.surface, f'M{i}', f' #{i}',
                     parent=self.maze_control_panel
                 )
             )
+    
+    def _create_command_line_panel(self):
+        self.command_line_panel = Panel(
+            (self.mazes_panel.rect.topright[0] + 2 * SKIP_SIZE, self.maze_control_panel.rect.bottomleft[1]+BIG_SKIP_SIZE),
+            (self.maze_control_panel.rect.width, 50+2*BIG_SKIP_SIZE),
+            self.surface,
+        )
+        self.command_line_panel.populate_one(
+            'text_entry',
+            TextEntry(
+                (BIG_SKIP_SIZE, BIG_SKIP_SIZE),
+                (5 * CHOOSE_MAZE_BTN_SIZE + 4*BIG_SKIP_SIZE, 50),
+                self.surface, 'command prompt', parent=self.command_line_panel
+            )
+        )
+        self.command_line_panel.populate_one(
+            'exec_cmd_btn',
+            Button(
+                (BIG_SKIP_SIZE*6 + 5*CHOOSE_MAZE_BTN_SIZE, BIG_SKIP_SIZE),
+                (CHOOSE_MAZE_BTN_SIZE, 50),
+                self.surface, 'Do', 'execute the command',
+                parent=self.command_line_panel
+            )
+        )
 
     def draw_maze(self, maze_index: int):
         for i in range(self.grid_shape[0]):
@@ -118,7 +122,7 @@ class GameGUI1:
                     border_radius=2
                 )
                 # border rect:
-                if (col_ind:=self.color_marks_to_show[self.chosen_maze_idx, i, j]) > 0:
+                if (col_ind:=self.game.color_marks_to_show[self.chosen_maze_idx, i, j]) > 0:
                     pygame.draw.rect(self.surface, COLORS_INTS[col_ind],
                         pygame.rect.Rect(24 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
                                         SKIP_SIZE + 24 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-8, TILE_SIZE-8),
@@ -144,7 +148,7 @@ class GameGUI1:
                                         SKIP_SIZE + 30 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-20, TILE_SIZE-20),
                         border_radius=3
                     )
-                if (self.somethings_to_show[self.chosen_maze_idx, i, j]):
+                if (self.game.somethings_to_show[self.chosen_maze_idx, i, j]):
                     self.surface.blit(
                         FONT_NORM.render('?!', False, BLACK),
                         pygame.rect.Rect(30 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
@@ -162,8 +166,8 @@ class GameGUI1:
         self.mazes_panel.update(pos)
         self.maze_control_panel.update(pos)
         for maze_id_str, choose_maze_btn in self.maze_control_panel.gui_objects.items():
-            choose_maze_btn.set_frame_color(
-                '#00FF00' if int(maze_id_str) == self.chosen_maze_idx else '#FFFFFF')
+            choose_maze_btn.set_frame_color('#00FF00' if int(maze_id_str) == self.chosen_maze_idx else '#FFFFFF')
+        self.command_line_panel.update(pos)
         self.draw_maze(self.chosen_maze_idx)
 
     def run(self):
@@ -178,6 +182,13 @@ class GameGUI1:
             # process events
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
+                    if any(te.focused for te in self.text_entries):
+                        for te in self.text_entries:
+                            if te.focused:
+                                te.process_key_code_alphanum(event.key)
+                                if event.key == pygame.K_BACKSPACE:
+                                    if pygame.key.get_mods() & pygame.KMOD_CTRL: te.clear()
+                                    else: te.pop_last_symbol()
                     if event.key == pygame.K_ESCAPE:
                         self.is_running = False
                     elif event.key == pygame.K_SPACE:
@@ -196,6 +207,12 @@ class GameGUI1:
                         if not obj_clicked: continue
                         if int(obj_clicked) in range(len(self.game.mazes)):
                             self.chosen_maze_idx = int(obj_clicked)
+                    elif self.command_line_panel.clicked():
+                        obj_clicked = self.command_line_panel.object_clicked()
+                        if obj_clicked == 'text_entry':
+                            self.command_line_panel.gui_objects['text_entry'].toggle_focused()
+                        elif obj_clicked == 'exec_cmd_btn':
+                            print('executed command:', self.command_line_panel.gui_objects['text_entry'].get_text())
                     elif self.mazes_panel.clicked():
                         coord = self.maze_tile_hovering(pos)
                         if event.button in {4, 5}:
