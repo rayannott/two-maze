@@ -85,7 +85,7 @@ class GameGUI2:
             )
         })
         self.control_panel.add_labels([
-            Label('**', self.surface, FONT_EVEN_HUGE, color=CP0[0], 
+            Label('**', self.surface, FONT_HUGE, color=CP0[0], 
                 center=((CONTROL_PANEL_SIZE[0] - CURRENT_TILE_PANEL_SIZE[0])//4, 
                         (CONTROL_PANEL_SIZE[1] - CURRENT_TILE_PANEL_SIZE[1])//4))
         ])

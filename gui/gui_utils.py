@@ -18,6 +18,7 @@ COLORS_INTS = [
     [200, 220,  30]
 ]
 
+# white cyan magenta yellow
 COLORS_HEX = [
     '#FFFFFF',
     '#32C8BE',
@@ -26,9 +27,12 @@ COLORS_HEX = [
 ]
 
 pygame.font.init()
+# TODO add new fonts
 FONT_SMALL = pygame.font.Font('main_font.ttf', 14)
 FONT_NORM = pygame.font.Font('main_font.ttf', 20)
-FONT_HUGE = pygame.font.Font('main_font.ttf', 34)
+FONT_BIG = pygame.font.Font('main_font.ttf', 34)
+FONT_HUGE = pygame.font.Font('main_font.ttf', 50)
+
 
 WINDOW_SIZE = pygame.display.set_mode((0, 0), pygame.FULLSCREEN).get_size()
 
