@@ -26,15 +26,15 @@ class MazeApp:
 
     def _create_buttons(self):
         self.create_btn = Button((70, 40), (1000, 235), self.surface, 
-                                'CREATE', 'create a new game room', FONT_HUGE)
+                                'CREATE', 'create a new game room', FONT_BIG)
         self.join_btn = Button((70, 40+(235+20)), (1000, 235), self.surface, 
-                                'JOIN', 'join an existing room', FONT_HUGE)
+                                'JOIN', 'join an existing room', FONT_BIG)
         self.options_btn = Button((70, 40+(235+20)*2), (490, 235), self.surface, 
-                                'OPTIONS', 'tweak the game settings', FONT_HUGE)
+                                'OPTIONS', 'tweak the game settings', FONT_BIG)
         self.rules_btn = Button((580, 40+(235+20)*2), (490, 235), self.surface, 
-                                'RULES', 'learn more', FONT_HUGE)
+                                'RULES', 'learn more', FONT_BIG)
         self.quit_btn = Button((70, 40+(235+20)*3), (1000, 235), self.surface, 
-                                'EXIT', 'quit the game', FONT_HUGE)
+                                'EXIT', 'quit the game', FONT_BIG)
 
     def _create_create_room_panel(self):
         self.create_room_panel = Panel(
@@ -122,7 +122,7 @@ class MazeApp:
             # process events
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
-                    #? such a mess omg...
+                    #* such a mess omg...
                     if any(te.focused for te in self.menu_text_entries):
                         for te in self.menu_text_entries:
                             if te.focused:
@@ -179,5 +179,3 @@ class MazeApp:
             self.game_gui = GameGUI1(self.game, self.surface)
         
         self.game_gui.run()
-
-
