@@ -8,7 +8,7 @@ import pygame
 
 from gui.gui_utils import FONT_NORM
 
-from .gui_utils import BLACK, CP0, FONT_HUGE, FONT_SMALL, FONT_NORM, GREY, WHITE, shift, WINDOW_SIZE
+from .gui_utils import BLACK, CP0, FONT_BIG, FONT_SMALL, FONT_NORM, GREY, WHITE, shift, WINDOW_SIZE
 
 
 class Label:
@@ -101,7 +101,7 @@ class GUIRect(ABC):
     @abstractmethod
     def draw(self) -> None:
         if self.visible:
-            pygame.draw.rect(self.surface, self.color_frame, self.rect, width=3 if self.hovering else 1, border_radius=3)
+            pygame.draw.rect(self.surface, self.color_frame, self.rect, width=4 if self.hovering else 2, border_radius=3)
 
     def set_text(self, set_to: str) -> None:
         self.text_label.set_text(set_to)
