@@ -89,6 +89,24 @@ class MazeApp:
             if (text_entry_text:=self.join_room_panel.gui_objects["text_entry"].get_text()) else 'empty field!'
         )
 
+    def create_start_btn_pressed(self):
+        try:
+            room_id = int(self.create_room_panel.gui_objects["text_entry"].get_text())
+        except ValueError:
+            print('Error: empty room id entry')
+        else:
+            print(f'p1: game started with {room_id}')
+            self.start_game_loop(room_id, is_second_player=False)
+    
+    def join_start_btn_pressed(self):
+        try:
+            room_id = int(self.join_room_panel.gui_objects["text_entry"].get_text())
+        except ValueError:
+            print('Error: empty room id entry')
+        else:
+            print(f'p2: game started with {room_id}')
+            self.start_game_loop(room_id, is_second_player=True)
+
     def run_menu(self):
         '''
         Infinite game loop
@@ -104,16 +122,19 @@ class MazeApp:
             # process events
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
+                    #? such a mess omg...
                     if any(te.focused for te in self.menu_text_entries):
                         for te in self.menu_text_entries:
                             if te.focused:
-                                if event.key == 1073741922:
-                                    te.add_symbol('0')
-                                elif 1073741913 <= event.key <= 1073741921:
-                                    te.add_symbol(str(event.key - 1073741912))
-                                elif event.key == pygame.K_BACKSPACE:
-                                    if pygame.key.get_mods() & pygame.KMOD_CTRL: te.text_label.set_text('')
-                                    elif te.text_label.text: te.text_label.set_text(te.text_label.text[:-1])
+                                te.process_key_code_numeric(event.key)
+                                if event.key == pygame.K_BACKSPACE:
+                                    if pygame.key.get_mods() & pygame.KMOD_CTRL: te.clear()
+                                    else: te.pop_last_symbol()
+                                elif event.key == pygame.K_RETURN:
+                                    if self.menu_text_entries[0].focused:
+                                        self.create_start_btn_pressed()
+                                    else:
+                                        self.join_start_btn_pressed()
                     if event.key == pygame.K_ESCAPE:
                         self.is_running = False
                 elif event.type == pygame.MOUSEBUTTONUP:
@@ -140,25 +161,13 @@ class MazeApp:
                                     .gui_objects['text_entry'] \
                                     .text_label.set_text(str(random.randint(100000, 999999)))
                         elif obj_clicked == 'start_btn':
-                            try:
-                                room_id = int(self.create_room_panel.gui_objects["text_entry"].get_text())
-                            except ValueError:
-                                print('Error: empty room id entry')
-                            else:
-                                print(f'game started with {room_id}')
-                                self.start_game_loop(room_id, is_second_player=False)
+                            self.create_start_btn_pressed()
                     elif self.join_room_panel.clicked():
                         obj_clicked = self.join_room_panel.object_clicked()
                         if obj_clicked == 'text_entry':
                             self.join_room_panel.gui_objects['text_entry'].toggle_focused()
                         elif obj_clicked == 'start_btn':
-                            try:
-                                room_id = int(self.join_room_panel.gui_objects["text_entry"].get_text())
-                            except ValueError:
-                                print('Error: empty room id entry')
-                            else:
-                                print(f'game started with {room_id}')
-                                self.start_game_loop(room_id, is_second_player=True)
+                            self.join_start_btn_pressed()
             pygame.display.update()
     
     def start_game_loop(self, room_id: int, is_second_player: bool):
