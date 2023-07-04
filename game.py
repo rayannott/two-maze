@@ -28,6 +28,7 @@ class Game:
         self._generate_color_marks_to_show()
         self._generate_somethings_to_show()
         self._generate_checkpoint_codes()
+        self._generate_random_starting_position()
 
     def _generate_color_marks_to_show(self):
         self.color_marks_to_show = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
@@ -67,3 +68,15 @@ class Game:
         for code, chp_coord in zip(codes, all_checkpoints_coordinates):
             self.checkpoint_codes[chp_coord] = code
         self.checkpoint_codes_backw = dict(zip(self.checkpoint_codes.values(), self.checkpoint_codes.keys()))
+
+    def _generate_random_starting_position(self):
+        random.seed(self.seed + 10)
+        all_empty_passes = self.mazes[0].get_all_empty_passes()
+        chosen_tile_pos = random.choice(all_empty_passes)
+        self.starting_position = (0, *chosen_tile_pos)
+
+    def shortest_distance_to_something(self, position: tuple[int, int, int]) -> int:
+        '''Returns an integer: number of moves to the 
+        closest something (checkpoint, pit or a letter)'''
+        maze_id, i0, j0 = position
+        ...
