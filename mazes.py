@@ -1,5 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum, auto
+from collections import deque
+import random
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -8,7 +10,6 @@ from mazelib import Maze
 from mazelib.generate.Prims import Prims
 
 from utils.constants import *
-
 
 COLORS = [
     np.array([1., 1., 1.]),
@@ -77,13 +78,19 @@ class MyMaze:
         self.seed = seed * (1 + maze_index) # so that NUM_OF_MAZES are all different
         self.maze_index = maze_index
         self.letters_in_this_maze = letters
-        self.checkpoint_codes = [np.random.randint(2**16) for _ in range(NUM_OF_CHECKPOINTS)]
+        unique_nums = list(range(1000, 10000))
+        random.seed(self.seed)
+        random.shuffle(unique_nums)
+
+        self.checkpoint_codes_list = unique_nums[maze_index*NUM_OF_CHECKPOINTS:(maze_index+1)*NUM_OF_CHECKPOINTS]
+        self.checkpoint_codes: dict[tuple[int, int, int], int] = {}
 
         self._maze_generated = Maze(self.seed)
         self._maze_generated.generator = Prims(10, 15)
         self._maze_generated.generate()
         self.m_grid = 1 - self._maze_generated.grid # 1 is pass, 0 is wall
         self.grid_shape: tuple[int, int] = self.m_grid.shape
+        self.maze: list[list[Tile]]
         
 
         self._create_maze()
@@ -94,7 +101,7 @@ class MyMaze:
         self._add_fog()
 
     def _create_maze(self):
-        self.maze: list[list[Tile]] = []
+        self.maze = []
         for i in range(self.grid_shape[0]):
             _row = []
             for j in range(self.grid_shape[1]):
@@ -140,8 +147,9 @@ class MyMaze:
 
     def _add_checkpoints(self):
         points = self._get_n_unoccupied_points(NUM_OF_CHECKPOINTS, self.seed+4)
-        for cp_code, p in zip(self.checkpoint_codes, points):
+        for cp_code, p in zip(self.checkpoint_codes_list, points):
             self.maze[p[0]][p[1]].has = CheckpointTI(code=cp_code)
+            self.checkpoint_codes[(self.maze_index, p[0], p[1])] = cp_code
     
     def _add_pits(self):
         NUM_OF_PITS = NUM_OF_MAZES - 1
@@ -200,6 +208,50 @@ class MyMaze:
                 if self.maze[i][j]._type == TT.PASS:
                     to_ret.append((i, j))
         return to_ret
+    
+    def bfs(self, start_pos: tuple[int, int]) -> ...:
+        '''Returns a list of coordinates: tiles to the 
+        closest something (checkpoint, pit or a letter)
+        If [], there is nothing left in this maze'''
+
+        visited = {start_pos}
+        queue = deque([start_pos])
+        found = False
+
+        backtrack = {start_pos: None}
+
+        while queue and not found:
+            c = queue.popleft() # current position
+            if self.maze[c[0]][c[1]].has is not None:
+                found = True
+                break
+            n = (c[0]+1, c[1]) # neighbor
+            if n not in visited and self.maze[n[0]][n[1]]._type == TT.PASS:
+                queue.append(n)
+                visited.add(n)
+                backtrack[n] = c
+            n = (c[0]-1, c[1]) # neighbor
+            if n not in visited and self.maze[n[0]][n[1]]._type == TT.PASS:
+                queue.append(n)
+                visited.add(n)
+                backtrack[n] = c
+            n = (c[0], c[1]+1) # neighbor
+            if n not in visited and self.maze[n[0]][n[1]]._type == TT.PASS:
+                queue.append(n)
+                visited.add(n)
+                backtrack[n] = c
+            n = (c[0], c[1]-1) # neighbor
+            if n not in visited and self.maze[n[0]][n[1]]._type == TT.PASS:
+                queue.append(n)
+                visited.add(n)
+                backtrack[n] = c
+        sol = []
+        if found:
+            while c is not None:
+                sol.append(c)
+                c = backtrack[c]
+            return sol[::-1]
+        else: return []
 
     def plot_mpl(self, fog: bool = True):
         maze_img = np.zeros((*self.grid_shape, 3), dtype=float)

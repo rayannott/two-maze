@@ -55,28 +55,14 @@ class Game:
                 self.somethings_to_show[maze_id, i, j] = 1
 
     def _generate_checkpoint_codes(self):
-        all_checkpoints_coordinates = []
-        np.random.seed(self.seed + 9)
-        for maze_id, maze in enumerate(self.mazes):
-            all_things = maze.get_all_things()
-            all_checkpoints_coordinates.extend([(maze_id, *el[0]) for el in all_things if el[1].tile_item_type == mazes.TileItemType.CHECKPOINT])
         self.checkpoint_codes: dict[tuple[int, int, int], int] = {}
-        codes = []
-        while len(codes) < len(all_checkpoints_coordinates):
-            this_code = np.random.randint(1000, 10000)
-            if this_code not in codes: codes.append(this_code)
-        for code, chp_coord in zip(codes, all_checkpoints_coordinates):
-            self.checkpoint_codes[chp_coord] = code
+        for maze_id, maze in enumerate(self.mazes):
+            self.checkpoint_codes.update(maze.checkpoint_codes)
         self.checkpoint_codes_backw = dict(zip(self.checkpoint_codes.values(), self.checkpoint_codes.keys()))
 
     def _generate_random_starting_position(self):
         random.seed(self.seed + 10)
-        all_empty_passes = self.mazes[0].get_all_empty_passes()
+        maze_index = np.random.randint(NUM_OF_MAZES)
+        all_empty_passes = self.mazes[maze_index].get_all_empty_passes()
         chosen_tile_pos = random.choice(all_empty_passes)
-        self.starting_position = (0, *chosen_tile_pos)
-
-    def shortest_distance_to_something(self, position: tuple[int, int, int]) -> int:
-        '''Returns an integer: number of moves to the 
-        closest something (checkpoint, pit or a letter)'''
-        maze_id, i0, j0 = position
-        ...
+        self.starting_position = (maze_index, *chosen_tile_pos)
