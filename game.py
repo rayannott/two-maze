@@ -59,10 +59,11 @@ class Game:
         for maze_id, maze in enumerate(self.mazes):
             all_things = maze.get_all_things()
             all_checkpoints_coordinates.extend([(maze_id, *el[0]) for el in all_things if el[1].tile_item_type == mazes.TileItemType.CHECKPOINT])
-        self.checkpoint_codes: dict[int, tuple[int, int, int]] = {}
+        self.checkpoint_codes: dict[tuple[int, int, int], int] = {}
         codes = []
         while len(codes) < len(all_checkpoints_coordinates):
             this_code = np.random.randint(1000, 10000)
             if this_code not in codes: codes.append(this_code)
         for code, chp_coord in zip(codes, all_checkpoints_coordinates):
-            self.checkpoint_codes[code] = chp_coord
+            self.checkpoint_codes[chp_coord] = code
+        self.checkpoint_codes_backw = dict(zip(self.checkpoint_codes.values(), self.checkpoint_codes.keys()))

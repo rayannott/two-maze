@@ -4,7 +4,7 @@ import random
 
 from game import Game
 from mazes import TC, TT, TileItemType
-from gui.gui_rect import Button, Panel, TextEntry
+from gui.gui_rect import Button, Label, Panel, TextEntry
 from gui.gui_utils import *
 from utils.constants import NUM_OF_MAZES, PER_MAP_COLOR_MARKS_SHOWN, SOMETHING_HINTS_SHOWN
 
@@ -18,8 +18,7 @@ COLORS_INTS = [
 
 TILE_ITEM_TYPES_COLORS = [
     [],
-    [250, 10, 10],
-    [10, 10, 250]
+    [250, 10, 10]
 ]
 
 TILE_SIZE = 40
@@ -38,13 +37,14 @@ class GameGUI1:
         self.surface = surface
         self.clock = pygame.time.Clock()
         self.is_running = True
+        self.feedback = ''; self.feedback_color = WHITE
+        print(self.game.checkpoint_codes)
 
         # visual notes/marks:
         self.mazes_color_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
         self.mazes_markers_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
         self.mazes_boolean_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
-        self.revealed_checkpoints: dict[int, tuple[int, int, int]] = {}
-        print(self.game.checkpoint_codes)
+        self.revealed_checkpoints: dict[tuple[int, int, int], int] = {}
 
         # creating the panels:
         self._create_mazes_panel()
@@ -83,7 +83,7 @@ class GameGUI1:
     def _create_command_line_panel(self):
         self.command_line_panel = Panel(
             (self.mazes_panel.rect.topright[0] + 2 * SKIP_SIZE, self.maze_control_panel.rect.bottomleft[1]+BIG_SKIP_SIZE),
-            (self.maze_control_panel.rect.width, 50+2*BIG_SKIP_SIZE),
+            (self.maze_control_panel.rect.width, 2*CHOOSE_MAZE_BTN_SIZE+3*BIG_SKIP_SIZE),
             self.surface,
         )
         self.command_line_panel.populate_one(
@@ -103,6 +103,9 @@ class GameGUI1:
                 parent=self.command_line_panel
             )
         )
+        self.command_line_panel.add_labels([
+            Label('*'*40, self.surface, FONT_SMALL, WHITE, topleft=(BIG_SKIP_SIZE, 2*BIG_SKIP_SIZE+CHOOSE_MAZE_BTN_SIZE))
+        ])
 
     def draw_maze(self, maze_index: int):
         for i in range(self.grid_shape[0]):
@@ -128,7 +131,8 @@ class GameGUI1:
                                         SKIP_SIZE + 24 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-8, TILE_SIZE-8),
                         width=5
                     )
-                if (self.mazes_boolean_map[self.chosen_maze_idx, i, j]):
+                if self.mazes_boolean_map[self.chosen_maze_idx, i, j]:
+                    self.game.somethings_to_show[self.chosen_maze_idx, i, j] = 0 # removes "!?" hint
                     pygame.draw.rect(self.surface, (150, 150, 150),
                         pygame.rect.Rect(21 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
                                         SKIP_SIZE + 21 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-2, TILE_SIZE-2),
@@ -148,12 +152,23 @@ class GameGUI1:
                                         SKIP_SIZE + 30 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-20, TILE_SIZE-20),
                         border_radius=3
                     )
-                if (self.game.somethings_to_show[self.chosen_maze_idx, i, j]):
+                if self.game.somethings_to_show[self.chosen_maze_idx, i, j]:
                     self.surface.blit(
                         FONT_NORM.render('?!', False, BLACK),
                         pygame.rect.Rect(30 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
                                         SKIP_SIZE + 30 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-20, TILE_SIZE-20))
-                
+        for coords in self.revealed_checkpoints.keys():
+            if coords[0] != self.chosen_maze_idx: continue
+            _, i, j = coords
+            pygame.draw.rect(self.surface, TILE_ITEM_TYPES_COLORS[2], 
+                    pygame.rect.Rect(20 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
+                                    SKIP_SIZE + 20 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE, TILE_SIZE),
+                    border_radius=2
+                )
+
+    def set_feedback(self, msg, color=WHITE):
+        self.feedback = msg
+        self.feedback_color = color
 
     def maze_tile_hovering(self, pos):
         '''Returns the coordinates of the Tile hovering'''
@@ -168,7 +183,40 @@ class GameGUI1:
         for maze_id_str, choose_maze_btn in self.maze_control_panel.gui_objects.items():
             choose_maze_btn.set_frame_color('#00FF00' if int(maze_id_str) == self.chosen_maze_idx else '#FFFFFF')
         self.command_line_panel.update(pos)
+        self.command_line_panel.labels[0].set_color(self.feedback_color)
+        self.command_line_panel.labels[0].set_text(self.feedback)
+
         self.draw_maze(self.chosen_maze_idx)
+    
+    def process_cmd_prompt(self):
+        cmd: str = self.command_line_panel.gui_objects['text_entry'].get_text()
+        print('executed command:', cmd)
+        match cmd.split():
+            case ['code', code_str]:
+                try:
+                    code_int = int(code_str)
+                except ValueError:
+                    self.set_feedback(f'invalid code: {code_str}', color=RED)
+                else:
+                    coord_of_chp = self.game.checkpoint_codes_backw.get(code_int)
+                    if coord_of_chp is not None:
+                        if coord_of_chp in self.revealed_checkpoints:
+                           self.set_feedback('this checkpoint is already open', color=RED)
+                           return
+                        self.revealed_checkpoints[coord_of_chp] = code_int
+                        self.set_feedback(f'new checkpoint: {code_int}', color=GREEN)
+                    else:
+                        self.set_feedback('wrong code', color=RED)
+            case ['sol', word_proposal]:
+                if word_proposal == self.game.word_to_win:
+                    self.set_feedback('victory!', color=GREEN)
+                else:
+                    self.set_feedback('wrong word', color=RED)
+            case ['clear', what_to_clear]:
+                if what_to_clear == 'bools': self.mazes_boolean_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
+                elif what_to_clear == 'markers': self.mazes_markers_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
+                elif what_to_clear == 'colors': self.mazes_color_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
+                else: self.set_feedback(f'{what_to_clear}?: [bools, markers, colors]')
 
     def run(self):
         while self.is_running:
@@ -182,6 +230,8 @@ class GameGUI1:
             # process events
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        self.is_running = False
                     if any(te.focused for te in self.text_entries):
                         for te in self.text_entries:
                             if te.focused:
@@ -189,18 +239,14 @@ class GameGUI1:
                                 if event.key == pygame.K_BACKSPACE:
                                     if pygame.key.get_mods() & pygame.KMOD_CTRL: te.clear()
                                     else: te.pop_last_symbol()
-                    if event.key == pygame.K_ESCAPE:
-                        self.is_running = False
+                                elif event.key == pygame.K_RETURN:
+                                    self.process_cmd_prompt()
+                        continue
                     elif event.key == pygame.K_SPACE:
                         if self.mazes_panel.clicked():
                             coord = self.maze_tile_hovering(pos)
-                            self.mazes_boolean_map[self.chosen_maze_idx, coord[0], coord[1]] = \
-                                1 - self.mazes_boolean_map[self.chosen_maze_idx, coord[0], coord[1]]
-                    elif event.key == pygame.K_q:
-                        #? debug
-                        if self.mazes_panel.clicked():
-                            coord = self.maze_tile_hovering(pos)
-                            print('deb', coord, self.game.mazes[self.chosen_maze_idx][coord[0]][coord[1]])
+                            self.mazes_markers_map[self.chosen_maze_idx, coord[0], coord[1]] = \
+                                (self.mazes_markers_map[self.chosen_maze_idx, coord[0], coord[1]] + 1) % 2
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if self.maze_control_panel.clicked():
                         obj_clicked = self.maze_control_panel.object_clicked()
@@ -212,13 +258,24 @@ class GameGUI1:
                         if obj_clicked == 'text_entry':
                             self.command_line_panel.gui_objects['text_entry'].toggle_focused()
                         elif obj_clicked == 'exec_cmd_btn':
-                            print('executed command:', self.command_line_panel.gui_objects['text_entry'].get_text())
+                            self.process_cmd_prompt()
                     elif self.mazes_panel.clicked():
                         coord = self.maze_tile_hovering(pos)
                         if event.button in {4, 5}:
-                            self.mazes_markers_map[self.chosen_maze_idx, coord[0], coord[1]] = \
-                                (self.mazes_markers_map[self.chosen_maze_idx, coord[0], coord[1]] + 1) % 3
-                        else:
+                            delt = 1 if event.button == 4 else -1
                             self.mazes_color_map[self.chosen_maze_idx, coord[0], coord[1]] = \
-                                (self.mazes_color_map[self.chosen_maze_idx, coord[0], coord[1]] + 1) % 4
+                                (self.mazes_color_map[self.chosen_maze_idx, coord[0], coord[1]] + delt) % 4
+                        elif event.button == 1:
+                            print('deb', coord, self.game.mazes[self.chosen_maze_idx][coord[0]][coord[1]])
+                        elif event.button == 3:
+                            coord = self.maze_tile_hovering(pos)
+                            self.mazes_boolean_map[self.chosen_maze_idx, coord[0], coord[1]] = \
+                                1 - self.mazes_boolean_map[self.chosen_maze_idx, coord[0], coord[1]]
+                elif pygame.key.get_mods() & pygame.KMOD_SHIFT:
+                    coord_hovering = self.maze_tile_hovering(pos)
+                    if not coord_hovering:
+                        continue
+                    code = self.revealed_checkpoints.get((self.chosen_maze_idx, *coord_hovering))
+                    if code is not None:
+                        self.set_feedback(f'{code} checkpoint', color=COLORS_INTS[3])
             pygame.display.update()
