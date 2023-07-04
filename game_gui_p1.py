@@ -8,14 +8,6 @@ from gui.gui_rect import Button, Label, Panel, TextEntry
 from gui.gui_utils import *
 from utils.constants import NUM_OF_MAZES, PER_MAP_COLOR_MARKS_SHOWN, SOMETHING_HINTS_SHOWN
 
-
-COLORS_INTS = [
-    [255, 255, 255],
-    [ 50, 200, 190],
-    [200,  40, 210],
-    [200, 220,  30]
-]
-
 TILE_ITEM_TYPES_COLORS = [
     [],
     [250, 10, 10]

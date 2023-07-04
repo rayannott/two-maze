@@ -5,11 +5,25 @@ FRAMERATE = 60
 WHITE = '#FFFFFF'
 BLACK = '#000000'
 GREY = '#333333'
+LIGHT_GREY = '#646464'
 GREEN = '#00FF00'
 RED = '#FF0000'
 CP0 = ('#DB5294', '#52DB9A') # cool color pair number 0
 CP1 = ('#AE5DDA', '#89DA5D')
 
+COLORS_INTS = [
+    [255, 255, 255],
+    [ 50, 200, 190],
+    [200,  40, 210],
+    [200, 220,  30]
+]
+
+COLORS_HEX = [
+    '#FFFFFF',
+    '#32C8BE',
+    '#C828D2',
+    '#C8DC1E'
+]
 
 pygame.font.init()
 FONT_SMALL = pygame.font.Font('main_font.ttf', 14)
