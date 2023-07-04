@@ -193,6 +193,14 @@ class MyMaze:
                     to_ret.append(((i, j), self.maze[i][j].has))
         return to_ret
 
+    def get_all_empty_passes(self) -> list[tuple[int, int]]:
+        to_ret = []
+        for i in range(self.grid_shape[0]):
+            for j in range(self.grid_shape[1]):
+                if self.maze[i][j]._type == TT.PASS:
+                    to_ret.append((i, j))
+        return to_ret
+
     def plot_mpl(self, fog: bool = True):
         maze_img = np.zeros((*self.grid_shape, 3), dtype=float)
         for i in range(self.grid_shape[0]):
