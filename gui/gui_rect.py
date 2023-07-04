@@ -129,7 +129,7 @@ class TextEntry(GUIRect):
                 surface: pygame.Surface,
                 hoverhint: str = '',
                 parent = None) -> None:
-        super().__init__(topleft, size, surface, '*'*35, hoverhint, parent=parent)
+        super().__init__(topleft, size, surface, '*'*int(size[0]/12.5), hoverhint, parent=parent)
         self.text_label.set_text('')
         self.focused = False
 
@@ -149,7 +149,27 @@ class TextEntry(GUIRect):
     
     def toggle_focused(self):
         self.focused = not self.focused
+    
+    def process_key_code_numeric(self, key_code: int):
+        if key_code == 1073741922:
+            self.add_symbol('0')
+        elif 1073741913 <= key_code <= 1073741921:
+            self.add_symbol(str(key_code - 1073741912))
+        elif 48 <= key_code <= 57:
+            self.add_symbol(str(key_code - 48))
+    
+    def process_key_code_alphanum(self, key_code: int):
+        if 97 <= key_code <= 122 or key_code == 32:
+            self.add_symbol(chr(key_code))
+        else:
+            self.process_key_code_numeric(key_code)
 
+    def clear(self):
+        self.text_label.set_text('')
+
+    def pop_last_symbol(self):
+        if self.text_label.text:
+            self.text_label.set_text(self.text_label.text[:-1])
 
 class ProgressBar(GUIRect):
     def __init__(self, 
