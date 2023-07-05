@@ -16,7 +16,7 @@ ACT_BTN_SIZE = (400, 110)
 class ButtonThickBorders(Button):
     def draw(self) -> None:
         if self.visible:
-            pygame.draw.rect(self.surface, self.color_frame, self.rect, width=10 if self.hovering else 5, border_radius=3)
+            pygame.draw.rect(self.surface, self.color_frame, self.rect, width=16 if self.hovering else 8, border_radius=3)
 
 
 class GameGUI2:
@@ -38,6 +38,7 @@ class GameGUI2:
         self.chosen_checkpoint_code_idx: int | None = None
 
         self._create_control_panel()
+        self._create_left_panel()
 
     def _create_control_panel(self):
         self.control_panel = Panel(
@@ -85,10 +86,16 @@ class GameGUI2:
             )
         })
         self.control_panel.add_labels([
-            Label('**', self.surface, FONT_HUGE, color=CP0[0], 
+            Label('**', self.surface, FONT_HUGE, color=WHITE, 
                 center=((CONTROL_PANEL_SIZE[0] - CURRENT_TILE_PANEL_SIZE[0])//4, 
                         (CONTROL_PANEL_SIZE[1] - CURRENT_TILE_PANEL_SIZE[1])//4))
         ])
+
+    def _create_left_panel(self):
+        self.left_panel = Panel(
+            (20, 20), (self.control_panel.rect.topleft[0] - 40, WINDOW_SIZE[1]-40),
+            self.surface
+        )
 
     def _choose_color(self, tile: Tile):
         if tile._type == TT.WALL: return LIGHT_GREY
@@ -134,8 +141,7 @@ class GameGUI2:
                 main_label = 'CHECKPOINT'
                 info_label = f'with code {tile_item.code}'
                 if tile_item.code not in self.revealed_checkpoints:
-                    act_button_text = f'REGISTER'
-                    info_label = f'with code {tile_item.code} (reg.)'
+                    act_button_text = f' REGISTER'
                 elif self.chosen_checkpoint_code_idx is not None:
                     act_button_text = f'GO TO {self.revealed_checkpoints[self.chosen_checkpoint_code_idx]}'
                     self.current_tile_panel.gui_objects['act_btn'].hint_label.set_text(' '.join(map(str, self.revealed_checkpoints)))
@@ -149,6 +155,7 @@ class GameGUI2:
                 main_label = 'LETTER'
                 info_label = f'letter {tile_item.letter.upper()}'
                 act_button_text = 'COLLECT'
+        self.control_panel.labels[0].set_color(COLORS_HEX[this_tile.color.value])
         self.current_tile_panel.labels[0].set_text(main_label)
         # self.current_tile_panel.labels[0].rect.center = (CURRENT_TILE_PANEL_SIZE[0]//2, 25)
         self.current_tile_panel.labels[1].set_text(info_label)
@@ -157,6 +164,7 @@ class GameGUI2:
 
     def update_gui(self, pos):
         self.control_panel.update(pos)
+        self.left_panel.update(pos)
         self.update_control_btns_colors()
         self.update_this_tile()
         self.control_panel.labels[0].set_text(
@@ -200,6 +208,7 @@ class GameGUI2:
             collected_letter = this_tile.has.letter
             self.game.mazes[maze_id].maze[i][j].has = None
             self.letters_collected.append(collected_letter)
+            self.closest_something_cache = None
             print('collected letter', self.letters_collected)
         
     
@@ -258,6 +267,8 @@ class GameGUI2:
                         #? debug
                         print('debug')
                         self.set_position((0, 1, 29))
+                    elif event.key == pygame.K_RETURN:
+                        self.process_act_btn_press()
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button in {4, 5}:
