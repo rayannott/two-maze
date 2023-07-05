@@ -3,7 +3,7 @@ import numpy as np
 import pygame
 
 from game import Game
-from gui.gui_rect import Panel, Button, Label
+from gui.gui_rect import Draggable, Panel, Button, Label
 from gui.gui_utils import *
 from mazes import TC, Tile, TT, TileItemType
 
@@ -11,6 +11,7 @@ CONTROL_PANEL_SIZE = (900, 900)
 CURRENT_TILE_PANEL_SIZE = (450, 450)
 MOVE_BTN_SIZE = (300, 100)
 ACT_BTN_SIZE = (400, 110)
+DRAGGABLE_LETTER_SIZE = (100, 100)
 
 
 class ButtonThickBorders(Button):
@@ -98,7 +99,7 @@ class GameGUI2:
         )
 
     def _choose_color(self, tile: Tile):
-        if tile._type == TT.WALL: return LIGHT_GREY
+        if tile._type == TT.WALL: return GREY
         if tile.has is None: return COLORS_HEX[tile.color.value]
         if tile.has.tile_item_type == TileItemType.CHECKPOINT:
             return '#0000FF'
@@ -180,6 +181,17 @@ class GameGUI2:
     def update(self):
         self._update_closest_something_cache()
 
+    def collected_new_letter(self, letter: str):
+        maze_id, i, j = self.position
+        self.game.mazes[maze_id].maze[i][j].has = None
+        self.left_panel.populate_one(
+            str(len(self.letters_collected)),
+            Draggable((60, 60), DRAGGABLE_LETTER_SIZE, self.surface, letter.upper(), text_font=FONT_BIG, parent=self.left_panel)
+        )
+        self.letters_collected.append(letter)
+        self.closest_something_cache = None
+        print('collected letter', letter)
+
     def process_act_btn_press(self):
         print('act btn pressed')
         this_tile = self.tile_and_neigh_cache[0]
@@ -204,12 +216,8 @@ class GameGUI2:
                     self.set_position(teleport_to)
                     print('teleported character to', teleport_to)
         elif this_tile.has.tile_item_type == TileItemType.LETTER:
-            maze_id, i, j = self.position
             collected_letter = this_tile.has.letter
-            self.game.mazes[maze_id].maze[i][j].has = None
-            self.letters_collected.append(collected_letter)
-            self.closest_something_cache = None
-            print('collected letter', self.letters_collected)
+            self.collected_new_letter(collected_letter)
         
     
     def get_this_tile_and_neigh(self) -> tuple[Tile, Tile, Tile, Tile, Tile]:
@@ -269,7 +277,11 @@ class GameGUI2:
                         self.set_position((0, 1, 29))
                     elif event.key == pygame.K_RETURN:
                         self.process_act_btn_press()
-
+                elif event.type == pygame.MOUSEBUTTONUP:
+                    if self.left_panel.clicked() and event.button == 1:
+                        obj_clicked = self.left_panel.object_clicked()
+                        if obj_clicked:
+                            self.left_panel.gui_objects[obj_clicked].hold(False)
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button in {4, 5}:
                         if self.current_tile_panel.gui_objects['act_btn'].clicked():
@@ -286,6 +298,8 @@ class GameGUI2:
                             curr_tile_panel_obj_clicked = self.current_tile_panel.object_clicked()
                             if curr_tile_panel_obj_clicked == 'act_btn':
                                 self.process_act_btn_press()
-                            
-                    print('current pos:', self.position)
+                    elif self.left_panel.clicked() and event.button == 1:
+                        obj_clicked = self.left_panel.object_clicked()
+                        if obj_clicked:
+                            self.left_panel.gui_objects[obj_clicked].hold(True)
             pygame.display.update()

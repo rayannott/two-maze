@@ -257,6 +257,33 @@ class Panel(GUIRect):
         return ''
 
 
+class Draggable(GUIRect):
+    def __init__(self, 
+                topleft: tuple[float, float],
+                size: tuple[float, float],
+                surface: pygame.Surface,
+                text: str = '',
+                hoverhint: str = '',
+                text_font: pygame.font.Font = FONT_NORM,
+                parent: Panel | None = None) -> None:
+        super().__init__(topleft, size, surface, text, hoverhint, text_font, parent)
+        self.current_pos = None
+        self.holding = False
+    
+    def update(self, current_mouse_pos: tuple[int, int]):
+        self.current_pos = current_mouse_pos
+        if self.holding:
+            self.rect.center = self.current_pos
+            self.text_label.rect.center = self.current_pos
+        return super().update(current_mouse_pos)
+    
+    def draw(self) -> None:
+        return super().draw()
+    
+    def hold(self, on: bool):
+        self.holding = on
+
+
 class Notification(Panel):
     def __init__(self, text: str, surface: pygame.Surface, pos: tuple[int, int], duration_tics=5) -> None:
         self.lines = text.split('\n')
