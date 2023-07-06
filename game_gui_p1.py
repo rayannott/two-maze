@@ -16,9 +16,9 @@ TILE_ITEM_TYPES_COLORS = [
 
 FOG_GRAY = [120, 120, 120]
 EXIT_COLOR = [10, 245, 0]
-SOMETHING_TO_SHOW_COLOR = [240, 160, 25] # orange
+ORANGE = [240, 160, 25]
 
-TILE_SIZE = 40
+TILE_SIZE = 45
 SKIP_SIZE = 2
 BIG_SKIP_SIZE = 5
 CHOOSE_MAZE_BTN_SIZE = 50
@@ -154,11 +154,11 @@ class GameGUI1:
                     pygame.draw.rect(self.surface, COLORS_INTS[col_ind],
                         pygame.rect.Rect(26 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
                                         SKIP_SIZE + 26 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-12, TILE_SIZE-12),
-                        width=3,
+                        width=4,
                         border_radius=3
                     )
                 if fill_color != FOG_GRAY and self.game.somethings_to_show[self.chosen_maze_idx, i, j]:
-                    pygame.draw.rect(self.surface, SOMETHING_TO_SHOW_COLOR,
+                    pygame.draw.rect(self.surface, [0, 0, 0],
                         pygame.rect.Rect(30 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
                                         SKIP_SIZE + 30 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-20, TILE_SIZE-20),
                         width=4,
@@ -233,7 +233,7 @@ class GameGUI1:
                 else:
                     info_hint_text: str|None = self.game.info_key_map.get(key_int)
                     if info_hint_text is not None:
-                        self.set_feedback(info_hint_text, color=SOMETHING_TO_SHOW_COLOR)
+                        self.set_feedback(info_hint_text, color=ORANGE)
                     else:
                         self.set_feedback('unknown key', color=RED)
             case ['help']:
