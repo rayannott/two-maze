@@ -15,9 +15,9 @@ class Game:
         random.seed(self.seed)
         self.deceptive_letters = ''.join((random.choice(ascii_lowercase) for _ in range(NUM_OF_MAZES)))
         self.word_to_win = random.choice(get_english_words())
-        letters_doubled = list(self.word_to_win + self.deceptive_letters)
-        random.shuffle(letters_doubled)
-        word_to_win_new = ''.join(letters_doubled)
+        self.letters_doubled = list(self.word_to_win + self.deceptive_letters)
+        random.shuffle(self.letters_doubled)
+        word_to_win_new = ''.join(self.letters_doubled)
 
         self.word_parts = split_word_into(word_to_win_new, n_parts=NUM_OF_MAZES)
         self.mazes: list[mazes.MyMaze] = []
