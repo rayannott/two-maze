@@ -172,7 +172,7 @@ class MazeApp:
     
     def start_game_loop(self, room_id: int, is_second_player: bool):
         self.game = Game(room_id, is_second_player)
-        print(room_id, self.game.word_to_win)
+        print(room_id, self.game.word_to_win, self.game.exit_position)
         if is_second_player:
             self.game_gui = GameGUI2(self.game, self.surface)
         else:
