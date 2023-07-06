@@ -270,6 +270,12 @@ class GameGUI1:
                             coord = self.maze_tile_hovering(pos)
                             self.mazes_markers_map[self.chosen_maze_idx, coord[0], coord[1]] = \
                                 (self.mazes_markers_map[self.chosen_maze_idx, coord[0], coord[1]] + 1) % len(TILE_ITEM_TYPES_COLORS)
+                    elif event.key == pygame.K_RETURN:
+                        self.text_entries[0].focused = True
+                    elif event.key == pygame.K_RIGHT:
+                        self.chosen_maze_idx = (self.chosen_maze_idx + 1) % NUM_OF_MAZES
+                    elif event.key == pygame.K_LEFT:
+                        self.chosen_maze_idx = (self.chosen_maze_idx - 1) % NUM_OF_MAZES
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if self.maze_control_panel.clicked():
                         obj_clicked = self.maze_control_panel.object_clicked()
