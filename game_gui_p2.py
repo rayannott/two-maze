@@ -37,6 +37,8 @@ class GameGUI2:
         self.tile_and_neigh_cache: tuple[Tile, Tile, Tile, Tile, Tile] | None = self.get_this_tile_and_neigh()
         self.closest_something_cache: int | None = None
         self.chosen_checkpoint_code_idx: int | None = None
+        
+        self.act_btn_clicked_on_exit = 0 # should be clicked 5 times
 
         self._create_control_panel()
         self._create_left_panel()
@@ -136,6 +138,10 @@ class GameGUI2:
             act_button_text = ''
             info_label = ''
             self.current_tile_panel.gui_objects['act_btn'].hint_label.set_text('do something')
+            if self.act_btn_clicked_on_exit >= 5 and self.position == self.game.exit_position:
+                main_label = 'VICTORY!'
+                info_label = 'well done :)'
+                color = GREEN
         else:
             tile_item = this_tile.has
             if tile_item.tile_item_type == TileItemType.CHECKPOINT:
@@ -193,8 +199,13 @@ class GameGUI2:
         print('collected letter', letter)
 
     def process_act_btn_press(self):
-        print('act btn pressed')
+        print('act btn pressed', 'current pos: ', self.position)
         this_tile = self.tile_and_neigh_cache[0]
+        if self.position == self.game.exit_position:
+            print('this is the exit!')
+            self.act_btn_clicked_on_exit += 1
+            return
+        self.act_btn_clicked_on_exit = 0 # no abusing
         if this_tile.has is None: return
         print('this tile:', this_tile)
         if this_tile.has.tile_item_type == TileItemType.PIT:
@@ -218,6 +229,7 @@ class GameGUI2:
         elif this_tile.has.tile_item_type == TileItemType.LETTER:
             collected_letter = this_tile.has.letter
             self.collected_new_letter(collected_letter)
+        
         
     
     def get_this_tile_and_neigh(self) -> tuple[Tile, Tile, Tile, Tile, Tile]:
@@ -274,7 +286,7 @@ class GameGUI2:
                     elif event.key == pygame.K_d:
                         #? debug
                         print('debug')
-                        self.set_position((0, 1, 29))
+                        self.set_position((2, 7, 10))
                     elif event.key == pygame.K_RETURN:
                         self.process_act_btn_press()
                 elif event.type == pygame.MOUSEBUTTONUP:
