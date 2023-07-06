@@ -1,3 +1,5 @@
+import pathlib
+
 import pygame
 
 FRAMERATE = 60
@@ -28,11 +30,11 @@ COLORS_HEX = [
 
 pygame.font.init()
 # TODO add new fonts
-FONT_SMALL = pygame.font.Font('main_font.ttf', 14)
-FONT_NORM = pygame.font.Font('main_font.ttf', 20)
-FONT_BIG = pygame.font.Font('main_font.ttf', 34)
-FONT_HUGE = pygame.font.Font('main_font.ttf', 50)
-
+assets_dir = pathlib.Path('assets'); dir_name = pathlib.Path('main_font.ttf')
+FONT_SMALL = pygame.font.Font(assets_dir/dir_name, 14)
+FONT_NORM = pygame.font.Font(assets_dir/dir_name, 20)
+FONT_BIG = pygame.font.Font(assets_dir/dir_name, 34)
+FONT_HUGE = pygame.font.Font(assets_dir/dir_name, 50)
 
 WINDOW_SIZE = pygame.display.set_mode((0, 0), pygame.FULLSCREEN).get_size()
 

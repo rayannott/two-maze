@@ -2,7 +2,7 @@ from pathlib import Path
 
 
 def get_english_words() -> list[str]:
-    with open(Path('utils')/Path('words.txt')) as f:
+    with open(Path('assets') / Path('words.txt')) as f:
         words = [el.strip() for el in f.readlines()]
     return [w for w in words if len(w) > 6]
 
