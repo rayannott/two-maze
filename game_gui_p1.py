@@ -14,7 +14,9 @@ TILE_ITEM_TYPES_COLORS = [
     [250, 10, 10]
 ]
 
+FOG_GRAY = [120, 120, 120]
 EXIT_COLOR = [10, 245, 0]
+SOMETHING_TO_SHOW_COLOR = [240, 160, 25] # orange
 
 TILE_SIZE = 40
 SKIP_SIZE = 2
@@ -33,7 +35,6 @@ class GameGUI1:
         self.clock = pygame.time.Clock()
         self.is_running = True
         self.feedback = ''; self.feedback_color = WHITE
-        print(self.game.checkpoint_codes)
 
         # visual notes/marks:
         self.mazes_color_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
@@ -112,7 +113,7 @@ class GameGUI1:
                     else:
                         fill_color = (10, 10, 10)
                 else:
-                    fill_color = (140, 140, 140)
+                    fill_color = FOG_GRAY
                 # tile itself:
                 pygame.draw.rect(self.surface, fill_color, 
                     pygame.rect.Rect(20 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
@@ -128,18 +129,11 @@ class GameGUI1:
                     )   
                 # border rect:
                 if self.mazes_boolean_map[self.chosen_maze_idx, i, j]:
-                    self.game.somethings_to_show[self.chosen_maze_idx, i, j] = 0 # removes "!?" hint
+                    self.game.somethings_to_show[self.chosen_maze_idx, i, j] = 0 # removes the hint
                     pygame.draw.rect(self.surface, (150, 150, 150),
                         pygame.rect.Rect(21 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
                                         SKIP_SIZE + 21 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-2, TILE_SIZE-2),
 
-                        width=3,
-                        border_radius=3
-                    )
-                if (col_ind:=self.mazes_color_map[self.chosen_maze_idx, i, j]) > 0:
-                    pygame.draw.rect(self.surface, COLORS_INTS[col_ind],
-                        pygame.rect.Rect(26 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
-                                        SKIP_SIZE + 26 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-12, TILE_SIZE-12),
                         width=3,
                         border_radius=3
                     )
@@ -149,18 +143,26 @@ class GameGUI1:
                                         SKIP_SIZE + 30 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-20, TILE_SIZE-20),
                         border_radius=3
                     )
-                if fill_color == (140, 140, 140): continue
-                if (col_ind:=self.game.color_marks_to_show[self.chosen_maze_idx, i, j]) > 0:
+                if fill_color != FOG_GRAY and (col_ind:=self.game.color_marks_to_show[self.chosen_maze_idx, i, j]) > 0:
                     pygame.draw.rect(self.surface, COLORS_INTS[col_ind],
                         pygame.rect.Rect(24 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
                                         SKIP_SIZE + 24 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-8, TILE_SIZE-8),
                         width=5
                     )
-                if self.game.somethings_to_show[self.chosen_maze_idx, i, j]:
-                    self.surface.blit(
-                        FONT_NORM.render('?!', False, BLACK),
+                if (col_ind:=self.mazes_color_map[self.chosen_maze_idx, i, j]) > 0:
+                    pygame.draw.rect(self.surface, COLORS_INTS[col_ind],
+                        pygame.rect.Rect(26 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
+                                        SKIP_SIZE + 26 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-12, TILE_SIZE-12),
+                        width=3,
+                        border_radius=3
+                    )
+                if fill_color != FOG_GRAY and self.game.somethings_to_show[self.chosen_maze_idx, i, j]:
+                    pygame.draw.rect(self.surface, SOMETHING_TO_SHOW_COLOR,
                         pygame.rect.Rect(30 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*j, 
-                                        SKIP_SIZE + 30 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-20, TILE_SIZE-20))
+                                        SKIP_SIZE + 30 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE-20, TILE_SIZE-20),
+                        width=4,
+                        border_radius=3
+                    )
         for coords in self.revealed_checkpoints.keys():
             if coords[0] != self.chosen_maze_idx: continue
             _, i, j = coords
@@ -222,6 +224,17 @@ class GameGUI1:
                 elif what_to_clear == 'markers': self.mazes_markers_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
                 elif what_to_clear == 'colors': self.mazes_color_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
                 else: self.set_feedback(f'{what_to_clear}?: [bools, markers, colors]')
+            case ['key', key_str]:
+                try:
+                    key_int = int(key_str)
+                except ValueError:
+                    self.set_feedback(f'invalid key: {key_str}', color=RED)
+                else:
+                    info_hint_text: str|None = self.game.info_key_map.get(key_int)
+                    if info_hint_text is not None:
+                        self.set_feedback(info_hint_text, color=SOMETHING_TO_SHOW_COLOR)
+                    else:
+                        self.set_feedback('unknown key', color=RED)
 
     def run(self):
         while self.is_running:
