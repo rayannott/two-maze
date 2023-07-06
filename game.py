@@ -1,4 +1,5 @@
 import random
+from string import ascii_lowercase
 
 import numpy as np
 
@@ -10,21 +11,27 @@ class Game:
     def __init__(self, room_id: int, is_second_player: bool) -> None:
         self.seed = room_id
         self.is_second_player = is_second_player # 1st: False, 2nd: True
-        random.seed(self.seed)
-        self.word_to_win = random.choice(get_english_words())
-        letters_doubled = list(random.choice(get_english_words()) * 2)
-        random.shuffle(letters_doubled)
-        word_to_win_doubled = ''.join(letters_doubled)
 
-        self.word_parts = split_word_into(word_to_win_doubled, n_parts=NUM_OF_MAZES)
+        random.seed(self.seed)
+        self.deceptive_letters = ''.join((random.choice(ascii_lowercase) for _ in range(NUM_OF_MAZES)))
+        self.word_to_win = random.choice(get_english_words())
+        letters_doubled = list(self.word_to_win + self.deceptive_letters)
+        random.shuffle(letters_doubled)
+        word_to_win_new = ''.join(letters_doubled)
+
+        self.word_parts = split_word_into(word_to_win_new, n_parts=NUM_OF_MAZES)
         self.mazes: list[mazes.MyMaze] = []
         for maze_idx in range(NUM_OF_MAZES):
             self.mazes.append(
                 mazes.MyMaze(seed=self.seed, letters=self.word_parts[maze_idx], maze_index=maze_idx)
             )
+        self.info_key_map: dict[int, str] = {}
+        for maze_idx in range(NUM_OF_MAZES):
+            self.info_key_map[self.mazes[maze_idx].info_key] = f'{self.deceptive_letters[maze_idx].upper()} is deceptive!'
         self.grid_shape = self.mazes[0].grid_shape
 
         self.revealed_exit: bool = False
+
         
         # visual clues
         self._generate_color_marks_to_show()
@@ -32,6 +39,11 @@ class Game:
         self._generate_checkpoint_codes()
         self._generate_random_starting_position()
         self._generate_exit()
+
+        self.__print_info()
+
+    def __print_info(self):
+        print(f'{self.word_to_win=}\n{self.deceptive_letters=}\n{self.starting_position=}\n{self.word_parts=}\n{self.info_key_map=}\n{self.checkpoint_codes=}\n{self.seed=}')
 
     def _generate_color_marks_to_show(self):
         self.color_marks_to_show = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
