@@ -11,6 +11,7 @@ from mazelib.generate.Prims import Prims
 
 from utils.constants import *
 
+
 COLORS = [
     np.array([1., 1., 1.]),
     np.array([0.19140625, 0.8046875 , 0.74609375]),
@@ -36,11 +37,13 @@ class TileItemType(Enum):
     LETTER = auto()
     CHECKPOINT = auto()
     PIT = auto()
+    INFO_HINT = auto()
 
 
 class TileItem:
     def __init__(self, tile_item_type: TileItemType) -> None:
         self.tile_item_type = tile_item_type
+
 
 class LetterTI(TileItem):
     def __init__(self, letter: str) -> None:
@@ -48,6 +51,7 @@ class LetterTI(TileItem):
         self.letter = letter
     def __repr__(self) -> str:
         return f'Letter({self.letter})'
+
 
 class CheckpointTI(TileItem):
     def __init__(self, code: int) -> None:
@@ -57,6 +61,7 @@ class CheckpointTI(TileItem):
     def __repr__(self) -> str:
         return f'Checkpoint({self.code})'
 
+
 class PitTI(TileItem):
     def __init__(self, index: int) -> None:
         super().__init__(tile_item_type=TileItemType.PIT)
@@ -64,6 +69,16 @@ class PitTI(TileItem):
     
     def __repr__(self):
         return f'Pit({self.index})'
+
+
+class InfoTI(TileItem):
+    def __init__(self, key: int) -> None:
+        super().__init__(tile_item_type=TileItemType.INFO_HINT)
+        self.key = key
+
+    def __repr__(self):
+        return f'Info({self.key})'
+
 
 @dataclass
 class Tile:
@@ -84,6 +99,10 @@ class MyMaze:
 
         self.checkpoint_codes_list = unique_nums[maze_index*NUM_OF_CHECKPOINTS:(maze_index+1)*NUM_OF_CHECKPOINTS]
         self.checkpoint_codes: dict[tuple[int, int, int], int] = {}
+        unique_nums = list(range(100, 1000))
+        random.seed(self.seed)
+        random.shuffle(unique_nums)
+        self.info_key = unique_nums[maze_index]
 
         self._maze_generated = Maze(self.seed)
         self._maze_generated.generator = Prims(10, 15)
@@ -92,12 +111,12 @@ class MyMaze:
         self.grid_shape: tuple[int, int] = self.m_grid.shape
         self.maze: list[list[Tile]]
         
-
         self._create_maze()
         self._add_colors()
         self._add_pits()
         self._add_letters()
         self._add_checkpoints()
+        self._add_info_hint()
         self._add_fog()
 
     def _create_maze(self):
@@ -152,13 +171,16 @@ class MyMaze:
             self.checkpoint_codes[(self.maze_index, p[0], p[1])] = cp_code
     
     def _add_pits(self):
-        NUM_OF_PITS = NUM_OF_MAZES - 1
         points = self._get_n_unoccupied_points(NUM_OF_PITS, self.seed+5)
         points_iter = iter(points)
         for pit_idx in range(NUM_OF_MAZES):
             if pit_idx != self.maze_index:
                 p = next(points_iter)
                 self.maze[p[0]][p[1]].has = PitTI(index=pit_idx)
+    
+    def _add_info_hint(self):
+        point = self._get_n_unoccupied_points(1, self.seed+6)[0]
+        self.maze[point[0]][point[1]].has = InfoTI(self.info_key)
     
     def __str__(self) -> str:
         res = ''
@@ -275,6 +297,9 @@ class MyMaze:
                     continue
                 if self.maze[i][j].has.tile_item_type == TileItemType.LETTER:
                     maze_img[i, j, :] = np.array([0., 1., 0.]) # green
+                    continue
+                if self.maze[i][j].has.tile_item_type == TileItemType.INFO_HINT:
+                    maze_img[i, j, :] = np.array([240., 160., 25.])/255. # orange
                     continue
         plt.imshow(maze_img)
         plt.show()
