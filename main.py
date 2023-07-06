@@ -1,4 +1,4 @@
-from app_maze import MazeApp
+from menu import MazeApp
 
 
 if __name__ == '__main__':
