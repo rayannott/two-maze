@@ -10,8 +10,11 @@ from utils.constants import NUM_OF_MAZES, PER_MAP_COLOR_MARKS_SHOWN, SOMETHING_H
 
 TILE_ITEM_TYPES_COLORS = [
     [],
+    [10, 10, 10],
     [250, 10, 10]
 ]
+
+EXIT_COLOR = [10, 245, 0]
 
 TILE_SIZE = 40
 SKIP_SIZE = 2
@@ -116,6 +119,13 @@ class GameGUI1:
                                     SKIP_SIZE + 20 + (SKIP_SIZE + TILE_SIZE)*i, TILE_SIZE, TILE_SIZE),
                     border_radius=2
                 )
+                # exit tile
+                if self.game.revealed_exit and maze_index == self.game.exit_position[0]:
+                    pygame.draw.rect(self.surface, EXIT_COLOR,
+                        pygame.rect.Rect(22 + SKIP_SIZE + (SKIP_SIZE + TILE_SIZE)*self.game.exit_position[2], 
+                                        SKIP_SIZE + 22 + (SKIP_SIZE + TILE_SIZE)*self.game.exit_position[1], TILE_SIZE-4, TILE_SIZE-4),
+                        border_radius=1
+                    )   
                 # border rect:
                 if self.mazes_boolean_map[self.chosen_maze_idx, i, j]:
                     self.game.somethings_to_show[self.chosen_maze_idx, i, j] = 0 # removes "!?" hint
@@ -203,7 +213,8 @@ class GameGUI1:
                         self.set_feedback('wrong code', color=RED)
             case ['sol', word_proposal]:
                 if word_proposal == self.game.word_to_win:
-                    self.set_feedback('victory!', color=GREEN)
+                    self.set_feedback('correct!', color=GREEN)
+                    self.game.revealed_exit = True
                 else:
                     self.set_feedback('wrong word', color=RED)
             case ['clear', what_to_clear]:
@@ -240,7 +251,7 @@ class GameGUI1:
                         if self.mazes_panel.clicked():
                             coord = self.maze_tile_hovering(pos)
                             self.mazes_markers_map[self.chosen_maze_idx, coord[0], coord[1]] = \
-                                (self.mazes_markers_map[self.chosen_maze_idx, coord[0], coord[1]] + 1) % 2
+                                (self.mazes_markers_map[self.chosen_maze_idx, coord[0], coord[1]] + 1) % len(TILE_ITEM_TYPES_COLORS)
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if self.maze_control_panel.clicked():
                         obj_clicked = self.maze_control_panel.object_clicked()
