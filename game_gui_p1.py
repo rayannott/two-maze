@@ -22,7 +22,7 @@ TILE_SIZE = 40
 SKIP_SIZE = 2
 BIG_SKIP_SIZE = 5
 CHOOSE_MAZE_BTN_SIZE = 50
-
+EXIT_BTN_SIZE = (60, 60)
 
 class GameGUI1:
     '''GUI for the first player (P1)'''
@@ -43,6 +43,7 @@ class GameGUI1:
         self.revealed_checkpoints: dict[tuple[int, int, int], int] = {}
 
         # creating the panels:
+        self.exit_btn = Button((WINDOW_SIZE[0]-20-EXIT_BTN_SIZE[0], 20), EXIT_BTN_SIZE, self.surface, 'EXIT', 'exit the game')
         self._create_mazes_panel()
         self._create_maze_control_panel()
         self._create_command_line_panel()
@@ -184,6 +185,7 @@ class GameGUI1:
         return i, j
 
     def update_gui(self, pos):
+        self.exit_btn.update(pos)
         self.mazes_panel.update(pos)
         self.maze_control_panel.update(pos)
         for maze_id_str, choose_maze_btn in self.maze_control_panel.gui_objects.items():
@@ -191,7 +193,6 @@ class GameGUI1:
         self.command_line_panel.update(pos)
         self.command_line_panel.labels[0].set_color(self.feedback_color)
         self.command_line_panel.labels[0].set_text(self.feedback)
-
         self.draw_maze(self.chosen_maze_idx)
     
     def process_cmd_prompt(self):
@@ -235,6 +236,10 @@ class GameGUI1:
                         self.set_feedback(info_hint_text, color=SOMETHING_TO_SHOW_COLOR)
                     else:
                         self.set_feedback('unknown key', color=RED)
+            case ['help']:
+                self.set_feedback('[code, key, sol, clear]')
+            case _:
+                self.set_feedback('?', color=RED)
 
     def run(self):
         while self.is_running:
@@ -249,7 +254,7 @@ class GameGUI1:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        self.is_running = False
+                        for te in self.text_entries: te.focused = False
                     if any(te.focused for te in self.text_entries):
                         for te in self.text_entries:
                             if te.focused:
@@ -289,6 +294,8 @@ class GameGUI1:
                             coord = self.maze_tile_hovering(pos)
                             self.mazes_boolean_map[self.chosen_maze_idx, coord[0], coord[1]] = \
                                 1 - self.mazes_boolean_map[self.chosen_maze_idx, coord[0], coord[1]]
+                    elif self.exit_btn.clicked():
+                        self.is_running = False
                 elif pygame.key.get_mods() & pygame.KMOD_SHIFT:
                     coord_hovering = self.maze_tile_hovering(pos)
                     if not coord_hovering:

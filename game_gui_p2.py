@@ -12,6 +12,7 @@ CURRENT_TILE_PANEL_SIZE = (450, 450)
 MOVE_BTN_SIZE = (300, 100)
 ACT_BTN_SIZE = (400, 110)
 DRAGGABLE_LETTER_SIZE = (100, 100)
+EXIT_BTN_SIZE = (60, 60)
 
 
 class ButtonThickBorders(Button):
@@ -39,6 +40,7 @@ class GameGUI2:
         
         self.act_btn_clicked_on_exit = 0 # should be clicked 5 times
 
+        self.exit_btn = Button((WINDOW_SIZE[0]-20-EXIT_BTN_SIZE[0], 20), EXIT_BTN_SIZE, self.surface, 'EXIT', 'exit the game')
         self._create_control_panel()
         self._create_left_panel()
 
@@ -98,6 +100,9 @@ class GameGUI2:
             (20, 20), (self.control_panel.rect.topleft[0] - 40, WINDOW_SIZE[1]-40),
             self.surface
         )
+        self.left_panel.add_labels([
+            Label('__/__', self.surface, FONT_NORM, color=WHITE, topright=shift(self.left_panel.rect.topright, (-5, 0)))
+        ])
 
     def _choose_color(self, tile: Tile):
         if tile._type == TT.WALL: return GREY
@@ -170,12 +175,12 @@ class GameGUI2:
 
         self.control_panel.labels[0].set_color(COLORS_HEX[this_tile.color.value])
         self.current_tile_panel.labels[0].set_text(main_label)
-        # self.current_tile_panel.labels[0].rect.center = (CURRENT_TILE_PANEL_SIZE[0]//2, 25)
         self.current_tile_panel.labels[1].set_text(info_label)
         self.current_tile_panel.labels[0].set_color(color)
         self.current_tile_panel.gui_objects['act_btn'].set_text(act_button_text)
 
     def update_gui(self, pos):
+        self.exit_btn.update(pos)
         self.control_panel.update(pos)
         self.left_panel.update(pos)
         self.update_control_btns_colors()
@@ -183,6 +188,7 @@ class GameGUI2:
         self.control_panel.labels[0].set_text(
             f'[{self.closest_something_cache}]' if self.tile_and_neigh_cache[0].color != TC.BLANK else '[?]'
         )
+        self.left_panel.labels[0].set_text(f'{len(self.letters_collected)}/{len(self.game.letters_doubled)}')
     
     def _update_closest_something_cache(self):
         if self.closest_something_cache is None:
@@ -277,7 +283,7 @@ class GameGUI2:
             for event in pygame.event.get():
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        self.is_running = False
+                        pass
                     elif event.key == pygame.K_LEFT:
                         self.move_character_to(direction='left')
                     elif event.key == pygame.K_RIGHT:
@@ -292,6 +298,11 @@ class GameGUI2:
                         self.set_position((0, 15, 9))
                     elif event.key == pygame.K_RETURN:
                         self.process_act_btn_press()
+                    elif event.key == pygame.K_SPACE:
+                        # scrolling through the checkpoints with the keyboard
+                        if len(self.revealed_checkpoints) > 1:
+                                delt = 1 if event.button == 4 else -1
+                                self.chosen_checkpoint_code_idx = (self.chosen_checkpoint_code_idx + delt) % len(self.revealed_checkpoints)
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if self.left_panel.clicked() and event.button == 1:
                         obj_clicked = self.left_panel.object_clicked()
@@ -317,4 +328,6 @@ class GameGUI2:
                         obj_clicked = self.left_panel.object_clicked()
                         if obj_clicked:
                             self.left_panel.gui_objects[obj_clicked].hold(True)
+                    elif self.exit_btn.clicked():
+                        self.is_running = False
             pygame.display.update()
