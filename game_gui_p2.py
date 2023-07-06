@@ -256,6 +256,7 @@ class GameGUI2:
         self.closest_something_cache = None
 
     def move_character_to(self, direction: Literal['up', 'down', 'right', 'left']):
+        if self.tile_and_neigh_cache is None: self.tile_and_neigh_cache = self.get_this_tile_and_neigh()
         this_tile, up_tile, down_tile, right_tile, left_tile = self.tile_and_neigh_cache
         if direction == 'up' and up_tile._type == TT.PASS:
             self.set_position((self.position[0], self.position[1]-1, self.position[2]))
@@ -301,8 +302,7 @@ class GameGUI2:
                     elif event.key == pygame.K_SPACE:
                         # scrolling through the checkpoints with the keyboard
                         if len(self.revealed_checkpoints) > 1:
-                                delt = 1 if event.button == 4 else -1
-                                self.chosen_checkpoint_code_idx = (self.chosen_checkpoint_code_idx + delt) % len(self.revealed_checkpoints)
+                                self.chosen_checkpoint_code_idx = (self.chosen_checkpoint_code_idx + 1) % len(self.revealed_checkpoints)
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if self.left_panel.clicked() and event.button == 1:
                         obj_clicked = self.left_panel.object_clicked()
