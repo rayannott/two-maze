@@ -30,7 +30,6 @@ class GameGUI2:
         self.is_running = True
 
         self.position: tuple[int, int, int] = self.game.starting_position
-        print('init position', self.position)
         self.letters_collected: list[str] = []
         self.revealed_checkpoints: list[int] = [] # only their codes
 
@@ -109,6 +108,8 @@ class GameGUI2:
             return '#FF0000'
         elif tile.has.tile_item_type == TileItemType.LETTER:
             return '#00FF00'
+        elif tile.has.tile_item_type == TileItemType.INFO_HINT:
+            return '#E1950F'
 
     def update_control_btns_colors(self):
         if self.tile_and_neigh_cache is None:
@@ -162,6 +163,11 @@ class GameGUI2:
                 main_label = 'LETTER'
                 info_label = f'letter {tile_item.letter.upper()}'
                 act_button_text = 'COLLECT'
+            elif tile_item.tile_item_type == TileItemType.INFO_HINT:
+                main_label = 'INFO HINT'
+                info_label = f'info key {tile_item.key}'
+                act_button_text = ''
+
         self.control_panel.labels[0].set_color(COLORS_HEX[this_tile.color.value])
         self.current_tile_panel.labels[0].set_text(main_label)
         # self.current_tile_panel.labels[0].rect.center = (CURRENT_TILE_PANEL_SIZE[0]//2, 25)
@@ -207,7 +213,6 @@ class GameGUI2:
             return
         self.act_btn_clicked_on_exit = 0 # no abusing
         if this_tile.has is None: return
-        print('this tile:', this_tile)
         if this_tile.has.tile_item_type == TileItemType.PIT:
             things = self.game.mazes[this_tile.has.index].get_all_things()
             for thing in things:
@@ -230,8 +235,6 @@ class GameGUI2:
             collected_letter = this_tile.has.letter
             self.collected_new_letter(collected_letter)
         
-        
-    
     def get_this_tile_and_neigh(self) -> tuple[Tile, Tile, Tile, Tile, Tile]:
         maze_id, i, j = self.position
         this_tile = self.game.mazes[maze_id].maze[i][j]
@@ -286,7 +289,7 @@ class GameGUI2:
                     elif event.key == pygame.K_d:
                         #? debug
                         print('debug')
-                        self.set_position((2, 7, 10))
+                        self.set_position((0, 15, 9))
                     elif event.key == pygame.K_RETURN:
                         self.process_act_btn_press()
                 elif event.type == pygame.MOUSEBUTTONUP:
