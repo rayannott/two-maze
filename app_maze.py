@@ -138,6 +138,7 @@ class MazeApp:
                     if event.key == pygame.K_ESCAPE:
                         for te in self.menu_text_entries: te.focused = False
                 elif event.type == pygame.MOUSEBUTTONUP:
+                    if event.button != 1: continue
                     if self.quit_btn.clicked():
                         self.is_running = False
                     elif self.join_btn.clicked():
