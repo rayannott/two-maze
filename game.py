@@ -23,12 +23,15 @@ class Game:
                 mazes.MyMaze(seed=self.seed, letters=self.word_parts[maze_idx], maze_index=maze_idx)
             )
         self.grid_shape = self.mazes[0].grid_shape
+
+        self.revealed_exit: bool = False
         
         # visual clues
         self._generate_color_marks_to_show()
         self._generate_somethings_to_show()
         self._generate_checkpoint_codes()
         self._generate_random_starting_position()
+        self._generate_exit()
 
     def _generate_color_marks_to_show(self):
         self.color_marks_to_show = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
@@ -66,3 +69,10 @@ class Game:
         all_empty_passes = self.mazes[maze_index].get_all_empty_passes()
         chosen_tile_pos = random.choice(all_empty_passes)
         self.starting_position = (maze_index, *chosen_tile_pos)
+
+    def _generate_exit(self):
+        random.seed(self.seed + 11)
+        maze_index = np.random.randint(NUM_OF_MAZES)
+        all_empty_passes = self.mazes[maze_index].get_all_empty_passes()
+        chosen_tile_pos = random.choice(all_empty_passes)
+        self.exit_position = (maze_index, *chosen_tile_pos)
