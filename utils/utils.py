@@ -8,9 +8,7 @@ def get_english_words() -> list[str]:
 
 def split_word_into(word: str, n_parts: int) -> list[str]:
     part_len = len(word) // n_parts
-    if n_parts == 2:
-        return [word[:part_len], word[part_len:]]
-    if n_parts == 3:
-        return [word[:part_len], word[part_len:2*part_len], word[2*part_len:]]
-    if n_parts == 4:
-        return [word[:part_len], word[part_len:2*part_len], word[2*part_len:3*part_len], word[4*part_len:]]
+    tmp = [word[part_len*i: part_len*(i+1)] for i in range(n_parts)]
+    if len(word) % n_parts == 0: return tmp
+    tmp[-1] += word[-1]
+    return tmp
