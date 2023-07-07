@@ -1,2 +1,2 @@
-# two-player-no-sock
-Two-player no-socket games, hopefully
+# Two-Maze
+Two-player game with mazes and yada yada yada
