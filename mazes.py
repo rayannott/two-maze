@@ -129,7 +129,7 @@ class MyMaze:
     def _add_fog(self):
         np.random.seed(self.seed+1)
         h, w = self.grid_shape
-        N_BLOBS = 3 + (1 if np.random.random() < 0.25 else 0)
+        N_BLOBS = 3 + (1 if np.random.random() < 0.4 else 0)
         for _ in range(N_BLOBS):
             epicenter = (np.random.randint(1, h-1), np.random.randint(1, w-1))
             for dh in range(-3, 4):
