@@ -93,13 +93,13 @@ class MyMaze:
         self.maze_index = maze_index
         self.letters_in_this_maze = letters
         unique_nums = list(range(1000, 10000))
-        random.seed(self.seed)
+        random.seed(seed)
         random.shuffle(unique_nums)
 
         self.checkpoint_codes_list = unique_nums[maze_index*NUM_OF_CHECKPOINTS:(maze_index+1)*NUM_OF_CHECKPOINTS]
         self.checkpoint_codes: dict[tuple[int, int, int], int] = {}
         unique_nums = list(range(100, 1000))
-        random.seed(self.seed)
+        random.seed(seed)
         random.shuffle(unique_nums)
         self.info_key = unique_nums[maze_index]
 
