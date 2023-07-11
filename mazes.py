@@ -6,8 +6,7 @@ import random
 import numpy as np
 import matplotlib.pyplot as plt
 
-from mazelib import Maze
-from mazelib.generate.Prims import Prims
+from maze_utils import Maze, Prims
 
 from utils.constants import *
 
