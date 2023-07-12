@@ -7,6 +7,8 @@ from mazes import TC, TT, TileItemType
 from gui.gui_rect import Button, Label, Panel, TextEntry
 from gui.gui_utils import *
 from utils.constants import NUM_OF_MAZES, PER_MAP_COLOR_MARKS_SHOWN, SOMETHING_HINTS_SHOWN
+from sfx_tools import play_sfx, play_sfx_warning
+
 
 TILE_ITEM_TYPES_COLORS = [
     [],
@@ -204,22 +206,28 @@ class GameGUI1:
                     code_int = int(code_str)
                 except ValueError:
                     self.set_feedback(f'invalid code: {code_str}', color=RED)
+                    play_sfx_warning()
                 else:
                     coord_of_chp = self.game.checkpoint_codes_backw.get(code_int)
                     if coord_of_chp is not None:
                         if coord_of_chp in self.revealed_checkpoints:
                            self.set_feedback('this checkpoint is already open', color=RED)
+                           play_sfx_warning()
                            return
                         self.revealed_checkpoints[coord_of_chp] = code_int
                         self.set_feedback(f'new checkpoint: {code_int}', color=GREEN)
+                        play_sfx('success')
                     else:
                         self.set_feedback('wrong code', color=RED)
+                        play_sfx_warning()
             case ['sol', word_proposal]:
                 if word_proposal == self.game.word_to_win:
                     self.set_feedback('correct!', color=GREEN)
                     self.game.revealed_exit = True
+                    play_sfx('victory')
                 else:
                     self.set_feedback('wrong word', color=RED)
+                    play_sfx_warning()
             case ['clear', what_to_clear]:
                 if what_to_clear == 'bools': self.mazes_boolean_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
                 elif what_to_clear == 'markers': self.mazes_markers_map = np.zeros((NUM_OF_MAZES, *self.grid_shape), dtype=int)
@@ -230,16 +238,20 @@ class GameGUI1:
                     key_int = int(key_str)
                 except ValueError:
                     self.set_feedback(f'invalid key: {key_str}', color=RED)
+                    play_sfx_warning()
                 else:
                     info_hint_text: str|None = self.game.info_key_map.get(key_int)
                     if info_hint_text is not None:
                         self.set_feedback(info_hint_text, color=ORANGE)
+                        play_sfx('success')
                     else:
                         self.set_feedback('unknown key', color=RED)
+                        play_sfx_warning()
             case ['help']:
                 self.set_feedback('[code, key, sol, clear]')
             case _:
                 self.set_feedback('?', color=RED)
+                play_sfx_warning()
 
     def run(self):
         while self.is_running:
@@ -259,6 +271,7 @@ class GameGUI1:
                         for te in self.text_entries:
                             if te.focused:
                                 te.process_key_code_alphanum(event.key)
+                                play_sfx('short_click')
                                 if event.key == pygame.K_BACKSPACE:
                                     if pygame.key.get_mods() & pygame.KMOD_CTRL: te.clear()
                                     else: te.pop_last_symbol()
@@ -270,37 +283,45 @@ class GameGUI1:
                             coord = self.maze_tile_hovering(pos)
                             self.mazes_markers_map[self.chosen_maze_idx, coord[0], coord[1]] = \
                                 (self.mazes_markers_map[self.chosen_maze_idx, coord[0], coord[1]] + 1) % len(TILE_ITEM_TYPES_COLORS)
+                            play_sfx('switch')
                     elif event.key == pygame.K_RETURN:
                         self.text_entries[0].focused = True
                     elif event.key == pygame.K_RIGHT:
                         self.chosen_maze_idx = (self.chosen_maze_idx + 1) % NUM_OF_MAZES
+                        play_sfx('switch')
                     elif event.key == pygame.K_LEFT:
                         self.chosen_maze_idx = (self.chosen_maze_idx - 1) % NUM_OF_MAZES
+                        play_sfx('switch')
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if self.maze_control_panel.clicked():
                         obj_clicked = self.maze_control_panel.object_clicked()
                         if not obj_clicked: continue
                         if int(obj_clicked) in range(len(self.game.mazes)):
                             self.chosen_maze_idx = int(obj_clicked)
+                        play_sfx('click')
                     elif self.command_line_panel.clicked():
                         obj_clicked = self.command_line_panel.object_clicked()
                         if obj_clicked == 'text_entry':
                             self.command_line_panel.gui_objects['text_entry'].toggle_focused()
                         elif obj_clicked == 'exec_cmd_btn':
                             self.process_cmd_prompt()
+                        play_sfx('click')
                     elif self.mazes_panel.clicked():
                         coord = self.maze_tile_hovering(pos)
                         if event.button in {4, 5}:
                             delt = 1 if event.button == 4 else -1
                             self.mazes_color_map[self.chosen_maze_idx, coord[0], coord[1]] = \
                                 (self.mazes_color_map[self.chosen_maze_idx, coord[0], coord[1]] + delt) % 4
+                            play_sfx('short_click')
                         elif event.button == 1:
                             print('deb', coord, self.game.mazes[self.chosen_maze_idx].maze[coord[0]][coord[1]])
                         elif event.button == 3:
                             coord = self.maze_tile_hovering(pos)
                             self.mazes_boolean_map[self.chosen_maze_idx, coord[0], coord[1]] = \
                                 1 - self.mazes_boolean_map[self.chosen_maze_idx, coord[0], coord[1]]
+                            play_sfx('short_click')
                     elif self.exit_btn.clicked():
+                        play_sfx('click')
                         self.is_running = False
                 elif pygame.key.get_mods() & pygame.KMOD_SHIFT:
                     coord_hovering = self.maze_tile_hovering(pos)

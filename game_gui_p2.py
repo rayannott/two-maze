@@ -6,6 +6,7 @@ from game import Game
 from gui.gui_rect import Draggable, Panel, Button, Label
 from gui.gui_utils import *
 from mazes import TC, Tile, TT, TileItemType
+from sfx_tools import play_sfx, play_sfx_warning
 
 CONTROL_PANEL_SIZE = (900, 900)
 CURRENT_TILE_PANEL_SIZE = (450, 450)
@@ -43,6 +44,8 @@ class GameGUI2:
         self.exit_btn = Button((WINDOW_SIZE[0]-20-EXIT_BTN_SIZE[0], 20), EXIT_BTN_SIZE, self.surface, 'EXIT', 'exit the game')
         self._create_control_panel()
         self._create_left_panel()
+
+        self.victory_sound_played = False
 
     def _create_control_panel(self):
         self.control_panel = Panel(
@@ -198,6 +201,9 @@ class GameGUI2:
     
     def update(self):
         self._update_closest_something_cache()
+        if not self.victory_sound_played and self.act_btn_clicked_on_exit >= 5:
+            play_sfx('victory')
+            self.victory_sound_played = True
 
     def collected_new_letter(self, letter: str):
         maze_id, i, j = self.position
@@ -218,7 +224,9 @@ class GameGUI2:
             self.act_btn_clicked_on_exit += 1
             return
         self.act_btn_clicked_on_exit = 0 # no abusing
-        if this_tile.has is None: return
+        if this_tile.has is None:
+            play_sfx_warning()
+            return
         if this_tile.has.tile_item_type == TileItemType.PIT:
             things = self.game.mazes[this_tile.has.index].get_all_things()
             for thing in things:
@@ -226,20 +234,24 @@ class GameGUI2:
                     break
             self.set_position((this_tile.has.index, *thing[0]))
             print('fell to', self.position)
+            play_sfx('teleport')
         elif this_tile.has.tile_item_type == TileItemType.CHECKPOINT:
             code = this_tile.has.code
             if code not in self.revealed_checkpoints:
                 self.revealed_checkpoints.append(code)
                 if len(self.revealed_checkpoints) == 2:
                     self.chosen_checkpoint_code_idx = 0
+                play_sfx('switch')
             elif self.chosen_checkpoint_code_idx is not None:
                 teleport_to = self.game.checkpoint_codes_backw[self.revealed_checkpoints[self.chosen_checkpoint_code_idx]]
                 if teleport_to != self.position:
                     self.set_position(teleport_to)
                     print('teleported character to', teleport_to)
+                play_sfx('teleport')
         elif this_tile.has.tile_item_type == TileItemType.LETTER:
             collected_letter = this_tile.has.letter
             self.collected_new_letter(collected_letter)
+            play_sfx('success')
         
     def get_this_tile_and_neigh(self) -> tuple[Tile, Tile, Tile, Tile, Tile]:
         maze_id, i, j = self.position
@@ -260,14 +272,19 @@ class GameGUI2:
         this_tile, up_tile, down_tile, right_tile, left_tile = self.tile_and_neigh_cache
         if direction == 'up' and up_tile._type == TT.PASS:
             self.set_position((self.position[0], self.position[1]-1, self.position[2]))
+            play_sfx('click')
         elif direction == 'down' and down_tile._type == TT.PASS:
             self.set_position((self.position[0], self.position[1]+1, self.position[2]))
+            play_sfx('click')
         elif direction == 'right' and right_tile._type == TT.PASS:
             self.set_position((self.position[0], self.position[1], self.position[2]+1))
+            play_sfx('click')
         elif direction == 'left' and left_tile._type == TT.PASS:
             self.set_position((self.position[0], self.position[1], self.position[2]-1))
+            play_sfx('click')
         else:
             print('cannot move!')
+            play_sfx_warning()
 
     def run(self):
         while self.is_running:
@@ -294,15 +311,14 @@ class GameGUI2:
                     elif event.key == pygame.K_DOWN:
                         self.move_character_to(direction='down')
                     elif event.key == pygame.K_d:
-                        #? debug
-                        print('debug')
-                        self.set_position((0, 15, 9))
+                        pass
                     elif event.key == pygame.K_RETURN:
                         self.process_act_btn_press()
                     elif event.key == pygame.K_SPACE:
                         # scrolling through the checkpoints with the keyboard
                         if len(self.revealed_checkpoints) > 1:
-                                self.chosen_checkpoint_code_idx = (self.chosen_checkpoint_code_idx + 1) % len(self.revealed_checkpoints)
+                            self.chosen_checkpoint_code_idx = (self.chosen_checkpoint_code_idx + 1) % len(self.revealed_checkpoints)
+                            play_sfx('short_click')
                 elif event.type == pygame.MOUSEBUTTONUP:
                     if self.left_panel.clicked() and event.button == 1:
                         obj_clicked = self.left_panel.object_clicked()
@@ -315,6 +331,7 @@ class GameGUI2:
                             if len(self.revealed_checkpoints) > 1:
                                 delt = 1 if event.button == 4 else -1
                                 self.chosen_checkpoint_code_idx = (self.chosen_checkpoint_code_idx + delt) % len(self.revealed_checkpoints)
+                                play_sfx('short_click')
                         continue
                     if self.control_panel.clicked():
                         obj_clicked = self.control_panel.object_clicked()
@@ -328,6 +345,8 @@ class GameGUI2:
                         obj_clicked = self.left_panel.object_clicked()
                         if obj_clicked:
                             self.left_panel.gui_objects[obj_clicked].hold(True)
+                            play_sfx('short_click')
                     elif self.exit_btn.clicked():
+                        play_sfx('click')
                         self.is_running = False
             pygame.display.update()
