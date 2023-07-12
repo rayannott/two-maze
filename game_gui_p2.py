@@ -188,7 +188,7 @@ class GameGUI2:
         self.control_panel.labels[0].set_text(
             f'[{self.closest_something_cache}]' if self.tile_and_neigh_cache[0].color != TC.BLANK else '[?]'
         )
-        self.left_panel.labels[0].set_text(f'{len(self.letters_collected)}/{len(self.game.letters_doubled)}')
+        self.left_panel.labels[0].set_text(f'{len(self.letters_collected)}/{len(self.game.letters_with_deceptive)}')
     
     def _update_closest_something_cache(self):
         if self.closest_something_cache is None:
