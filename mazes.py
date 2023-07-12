@@ -101,7 +101,7 @@ class MyMaze:
         unique_nums = list(range(100, 1000))
         random.seed(seed)
         random.shuffle(unique_nums)
-        self.info_key = unique_nums[maze_index]
+        self.info_keys = unique_nums[maze_index*NUM_OF_INFO_HINTS:(maze_index+1)*NUM_OF_INFO_HINTS]
 
         self._maze_generated = Maze(self.seed)
         self._maze_generated.generator = Prims(10, 15)
@@ -115,7 +115,7 @@ class MyMaze:
         self._add_pits()
         self._add_letters()
         self._add_checkpoints()
-        self._add_info_hint()
+        self._add_info_hints()
         self._add_fog()
 
     def _create_maze(self):
@@ -177,9 +177,10 @@ class MyMaze:
                 p = next(points_iter)
                 self.maze[p[0]][p[1]].has = PitTI(index=pit_idx)
     
-    def _add_info_hint(self):
-        point = self._get_n_unoccupied_points(1, self.seed+6)[0]
-        self.maze[point[0]][point[1]].has = InfoTI(self.info_key)
+    def _add_info_hints(self):
+        points = self._get_n_unoccupied_points(NUM_OF_INFO_HINTS, self.seed+6)
+        for info_key, point in zip(self.info_keys, points):
+            self.maze[point[0]][point[1]].has = InfoTI(info_key)
     
     def __str__(self) -> str:
         res = ''

@@ -13,11 +13,11 @@ class Game:
         self.is_second_player = is_second_player # 1st: False, 2nd: True
 
         random.seed(self.seed)
-        self.deceptive_letters = ''.join((random.choice(ascii_lowercase) for _ in range(NUM_OF_MAZES)))
+        self.deceptive_letters = ''.join((random.choice(ascii_lowercase) for _ in range(NUM_OF_MAZES*NUM_OF_INFO_HINTS)))
         self.word_to_win = random.choice(get_english_words())
-        self.letters_doubled = list(self.word_to_win + self.deceptive_letters)
-        random.shuffle(self.letters_doubled)
-        word_to_win_new = ''.join(self.letters_doubled)
+        self.letters_with_deceptive = list(self.word_to_win + self.deceptive_letters)
+        random.shuffle(self.letters_with_deceptive)
+        word_to_win_new = ''.join(self.letters_with_deceptive)
 
         self.word_parts = split_word_into(word_to_win_new, n_parts=NUM_OF_MAZES)
         self.mazes: list[mazes.MyMaze] = []
@@ -27,7 +27,8 @@ class Game:
             )
         self.info_key_map: dict[int, str] = {}
         for maze_idx in range(NUM_OF_MAZES):
-            self.info_key_map[self.mazes[maze_idx].info_key] = f'{self.deceptive_letters[maze_idx].upper()} is deceptive!'
+            for ik_idx, info_key in enumerate(self.mazes[maze_idx].info_keys):
+                self.info_key_map[info_key] = f'{self.deceptive_letters[maze_idx*NUM_OF_INFO_HINTS + ik_idx].upper()} is deceptive!'
         self.grid_shape = self.mazes[0].grid_shape
 
         self.revealed_exit: bool = False
